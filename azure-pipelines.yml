@@ -1,0 +1,75 @@
+
+jobs:
+  - job: VS2019
+    strategy:
+      matrix:
+        REL-X64:
+          BUILD_TYPE: Release
+          ARCH: x64
+        DBG-X64:
+          BUILD_TYPE: Debug
+          ARCH: x64
+    pool:
+      vmImage: windows-2019
+    steps:
+      - task: CMake@1
+        displayName: 'CMake'
+        inputs:
+          cmakeArgs: -G "Visual Studio 16 2019" -A x64 ..
+      - task: MSBuild@1
+        displayName: 'Build Solution'
+        inputs:
+          solution: build/guess.sln
+          msbuildArguments: '/m /p:Configuration=$(BUILD_TYPE)'
+
+  - job: LINUX_CLANG
+    strategy:
+      matrix:
+        REL:
+          BUILD_TYPE: Release
+          CXXFLAGS: '-stdlib=libc++ -D_LIBCPP_VERSION=1 -march=native'
+        DBG:
+          BUILD_TYPE: Debug
+          CXXFLAGS: '-stdlib=libc++ -D_LIBCPP_VERSION=1 -fno-omit-frame-pointer -fsanitize=address'
+    pool:
+      vmImage: ubuntu-16.04
+    variables:
+      CXX: /opt/clang+llvm-8.0.0-x86_64-linux-gnu-ubuntu-16.04/bin/clang++
+      LD_LIBRARY_PATH: /opt/clang+llvm-8.0.0-x86_64-linux-gnu-ubuntu-16.04/lib
+      ASAN_SYMBOLIZER_PATH: /opt/clang+llvm-8.0.0-x86_64-linux-gnu-ubuntu-16.04/bin/llvm-symbolizer
+    steps:
+      - script: |
+          sudo curl -Ls http://releases.llvm.org/8.0.0/clang%2bllvm-8.0.0-x86_64-linux-gnu-ubuntu-16.04.tar.xz -o clang.tar.xz
+          sudo tar -xf clang.tar.xz -C /opt
+      - script: |
+          mkdir build
+          cd build
+          cmake -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) ..
+        displayName: 'CMake'
+
+  - job: LINUX_GCC
+    strategy:
+      matrix:
+        REL:
+          BUILD_TYPE: Release
+          CXXFLAGS: '-march=native'
+        DBG:
+          BUILD_TYPE: Debug
+          CXXFLAGS: '-fno-omit-frame-pointer -fsanitize=address'
+    pool:
+      vmImage: ubuntu-16.04
+    variables:
+      CXX: g++-9
+    steps:
+      - script: |
+          sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+          sudo apt update
+          sudo apt install -y --no-install-recommends g++-9
+      - script: |
+          mkdir build
+          cd build
+          cmake -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) ..
+        displayName: 'CMake'
+      - script: make guess-example
+        workingDirectory: build
+        displayName: 'Build'
