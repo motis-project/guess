@@ -33,7 +33,7 @@ int main(int argc, char const** argv) {
     for (auto it = std::istream_iterator<std::string>(in),
               end = std::istream_iterator<std::string>();
          it != end; ++it) {
-      stations.emplace_back(*it, 1.0);
+      stations.emplace_back(*it, 1.0F);
       ++line;
     }
   } catch (std::exception const& e) {
