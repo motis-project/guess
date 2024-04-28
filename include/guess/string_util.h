@@ -64,7 +64,7 @@ inline void normalize(std::string& s) {
   // Let's hope that's the case on all architectures we care about
   auto* utf8_in = reinterpret_cast<const utf8proc_uint8_t*>(s.c_str());
 
-  size_t size = utf8proc_map(utf8_in, s.length(), &utf8_out, options);
+  auto const size = utf8proc_map(utf8_in, s.length(), &utf8_out, options);
   if (size > 0) {
     s = std::string(reinterpret_cast<const char*>(utf8_out), size);
   } else {
