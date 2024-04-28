@@ -1,6 +1,9 @@
 #pragma once
 
+#include <iostream>
 #include <string>
+
+#include "utf8proc.h"
 
 namespace guess {
 
@@ -56,19 +59,27 @@ inline void normalize(std::string& s) {
   replace_all(s, "(", " ");
   replace_all(s, ")", " ");
 
-  for (int i = 0; i < s.length(); ++i) {
-    char c = s[i];
-    bool is_number = c >= '0' && c <= '9';
-    bool is_lower_case_char = c >= 'a' && c <= 'z';
-    bool is_upper_case_char = c >= 'A' && c <= 'Z';
-    if (!is_number && !is_lower_case_char && !is_upper_case_char) {
-      s[i] = ' ';
-    }
+  auto const options =
+      static_cast<utf8proc_option_t>(utf8proc_option_t::UTF8PROC_DECOMPOSE |
+                                     utf8proc_option_t::UTF8PROC_STRIPMARK |
+                                     utf8proc_option_t::UTF8PROC_CASEFOLD);
+
+  utf8proc_uint8_t* utf8_out = nullptr;
+
+  // This is only safe when the representation of char matches unsigned char.
+  // Let's hope that's the case on all architectures we care about
+  auto* utf8_in = reinterpret_cast<const utf8proc_uint8_t*>(s.c_str());
+
+  size_t size = utf8proc_map(utf8_in, s.length(), &utf8_out, options);
+  if (size > 0) {
+    s = std::string(reinterpret_cast<const char*>(utf8_out), size);
+  } else {
+    std::clog << "guess: Failed to normalize unicode string: "
+              << utf8proc_errmsg(size);
   }
+  free(utf8_out);
 
   replace_all(s, "  ", " ");
-
-  std::transform(begin(s), end(s), begin(s), ::tolower);
 }
 
 }  // namespace guess
