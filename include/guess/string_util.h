@@ -45,12 +45,6 @@ inline void replace_all(std::string& s, std::string const& from,
 inline void normalize(std::string& s) {
   replace_all(s, "è", "e");
   replace_all(s, "é", "e");
-  replace_all(s, "Ä", "a");
-  replace_all(s, "ä", "a");
-  replace_all(s, "Ö", "o");
-  replace_all(s, "ö", "o");
-  replace_all(s, "Ü", "u");
-  replace_all(s, "ü", "u");
   replace_all(s, "ß", "ss");
   replace_all(s, "-", " ");
   replace_all(s, "/", " ");
